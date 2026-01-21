@@ -1,6 +1,6 @@
 # fractal-napari-workflows
 
-Fractal wrapper legacy task to run napari workflows
+Fractal wrapper legacy task to run [napari workflows](https://github.com/haesleinhuepf/napari-workflows).
 
 Based on [fractal-tasks-core](https://github.com/fractal-analytics-platform/fractal-tasks-core) version 1.5.6.
 
