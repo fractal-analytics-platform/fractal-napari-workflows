@@ -27,9 +27,13 @@ authors = [
 # Required Python version and dependencies
 requires-python = ">=3.11,<3.14"
 dependencies = [
-    "ngio>=0.4.1,<0.5",
-    "scikit-image",
-    "fractal-task-tools>=0.1.0,<0.2.0",
+    "fractal-tasks-core>=1.5.0,<2.0.0",
+    "napari-segment-blobs-and-things-with-membranes!=0.3.3",
+    "napari-workflows!=0.2.8",
+    "napari-skimage-regionprops!=0.8.1",
+    "napari-tools-menu!=0.1.19",
+    "fractal-task-tools>=0.1.0,<0.3.0",
+    "pydantic>=2,<=2.8.2",
 ]
 
 # Optional dependencies (e.g. for `pip install -e ".[dev]"`, see
@@ -76,6 +80,11 @@ ignore = [
     "D401",  # First line should be in imperative mood (remove to opt in)
     "D415",  # First line should end with a period (remove to opt in)
     "UP045",
+    "D100",
+    "D417",
+    "C408",
+    "RUF005",
+    "RUF015",
 ]
 
 [tool.ruff.lint.per-file-ignores]

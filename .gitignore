@@ -120,3 +120,6 @@ pixi.lock
 # Notebooks
 *.ipynb
 .ipynb_checkpoints
+
+# Test data
+tests/data/10_5281_zenodo_13305156

@@ -2,84 +2,97 @@
   "manifest_version": "2",
   "task_list": [
     {
-      "name": "Threshold Segmentation",
-      "category": "Segmentation",
+      "name": "Napari Workflows Wrapper",
+      "category": "Measurement",
       "tags": [
-        "Instance Segmentation",
-        "Classical segmentation"
+        "2D",
+        "3D"
       ],
-      "docs_info": "### Purpose\n- Description and documentation of the Task functionality\n- Bullet points that cover main features of the tasks.\n- Can use **full** *markdown* formatting (including embedding images).\n\n### Outputs\n- Optional section on what kind of outputs the task generates. For the thresholding_task: Generates a new label image named `label_name`.\n\n### Limitations\n- List known limitations of the task (e.g. only works for certain data types).",
+      "docs_info": "### Purpose\n- Executes a **napari workflow** on the regions of interest (ROIs) within a single OME-NGFF image.\n- Processes specified images and labels as inputs to the workflow, producing outputs such as new labels and data tables.\n- Offers **flexibility in defining input and output** specifications to customize the workflow for specific datasets and analysis needs.\n\n### Limitations\n- Currently supports only Napari workflows that utilize functions from the `napari-segment-blobs-and-things-with-membranes` module. Other Napari-compatible modules are not supported.\n\n### Input Specifications\nNapari workflows require explicit definitions of input and output data.\nExample of valid `input_specs`:\n```json\n{\n    \"in_1\": {\"type\": \"image\", \"channel\": {\"wavelength_id\": \"A01_C02\"}},\n    \"in_2\": {\"type\": \"image\", \"channel\": {\"label\": \"DAPI\"}},\n    \"in_3\": {\"type\": \"label\", \"label_name\": \"label_DAPI\"}\n}\n```\n\nExample of valid `output_specs`:\n```json\n{\n    \"out_1\": {\"type\": \"label\", \"label_name\": \"label_DAPI_new\"},\n    \"out_2\": {\"type\": \"dataframe\", \"table_name\": \"measurements\"},\n}\n```\n",
       "type": "parallel",
-      "executable_parallel": "threshold_segmentation_task.py",
+      "executable_parallel": "napari_workflows_wrapper.py",
       "meta_parallel": {
-        "cpus_per_task": 1,
-        "mem": 4000
+        "cpus_per_task": 4,
+        "mem": 16000
       },
       "args_schema_parallel": {
         "$defs": {
-          "ChannelSelectionModel": {
-            "description": "Model for channel selection.",
+          "ChannelInputModel": {
+            "description": "A channel which is specified by either `wavelength_id` or `label`.",
             "properties": {
-              "mode": {
-                "default": "label",
-                "enum": [
-                  "label",
-                  "wavelength_id",
-                  "index"
-                ],
-                "title": "Mode",
-                "type": "string",
-                "description": "Specifies how to interpret the identifier. Can be \"label\", \"wavelength_id\", or \"index\" (must be an integer)."
+              "wavelength_id": {
+                "title": "Wavelength Id",
+                "type": "string"
               },
-              "identifier": {
-                "title": "Identifier",
+              "label": {
+                "title": "Label",
+                "type": "string"
+              }
+            },
+            "title": "ChannelInputModel",
+            "type": "object"
+          },
+          "NapariWorkflowsInput": {
+            "description": "A value of the `input_specs` argument in `napari_workflows_wrapper`.",
+            "properties": {
+              "type": {
+                "enum": [
+                  "image",
+                  "label"
+                ],
+                "title": "Type",
                 "type": "string",
-                "description": "Unique identifier for the channel. This can be a channel label, wavelength ID, or index."
+                "description": "Input type (either `image` or `label`)."
+              },
+              "label_name": {
+                "title": "Label Name",
+                "type": "string",
+                "description": "Label name (for label inputs only)."
+              },
+              "channel": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/ChannelInputModel"
+                  }
+                ],
+                "title": "Channel",
+                "description": "`ChannelInputModel` object (for image inputs only)."
               }
             },
             "required": [
-              "identifier"
+              "type"
             ],
-            "title": "ChannelSelectionModel",
+            "title": "NapariWorkflowsInput",
             "type": "object"
           },
-          "IteratorConfiguration": {
-            "description": "Advanced Masking configuration.",
+          "NapariWorkflowsOutput": {
+            "description": "A value of the `output_specs` argument in `napari_workflows_wrapper`.",
             "properties": {
-              "masking": {
-                "$ref": "#/$defs/MaskingConfiguration",
-                "title": "Masking Iterator Configuration",
-                "description": "If configured, the segmentation will be only saved within the mask region."
-              },
-              "roi_table": {
-                "title": "Iterate Over ROIs",
-                "type": "string",
-                "description": "Name of a ROI table. If provided, the segmentation will be performed for each ROI in the specified ROI table."
-              }
-            },
-            "title": "IteratorConfiguration",
-            "type": "object"
-          },
-          "MaskingConfiguration": {
-            "description": "Masking configuration.",
-            "properties": {
-              "mode": {
-                "default": "Table Name",
+              "type": {
                 "enum": [
-                  "Table Name",
-                  "Label Name"
+                  "label",
+                  "dataframe"
                 ],
-                "title": "Mode",
+                "title": "Type",
                 "type": "string",
-                "description": "Mode of masking to be applied. If \"Table Name\", the identifier refers to a masking table name. If \"Label Name\", the identifier refers to a label image name."
+                "description": "Output type (either `label` or `dataframe`)."
               },
-              "identifier": {
-                "title": "Identifier",
+              "label_name": {
+                "title": "Label Name",
                 "type": "string",
-                "description": "Name of the masking table or label image depending on the mode."
+                "description": "Label name (for label outputs, it is used as the name of the label; for dataframe outputs, it is used to fill the `region[\"path\"]` field)."
+              },
+              "table_name": {
+                "title": "Table Name",
+                "type": "string",
+                "description": "Table name (for dataframe outputs only)."
               }
             },
-            "title": "MaskingConfiguration",
+            "required": [
+              "type",
+              "label_name"
+            ],
+            "title": "NapariWorkflowsOutput",
             "type": "object"
           }
         },
@@ -88,161 +101,68 @@
           "zarr_url": {
             "title": "Zarr Url",
             "type": "string",
-            "description": "URL to the OME-Zarr container"
+            "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
           },
-          "channel": {
-            "$ref": "#/$defs/ChannelSelectionModel",
-            "title": "Channel",
-            "description": "Select the input channel to be used for segmentation."
-          },
-          "label_name": {
-            "title": "Label Name",
+          "workflow_file": {
+            "title": "Workflow File",
             "type": "string",
-            "description": "Name of the resulting label image. If not provided, it will be set to \"<channel_identifier>_thresholded\"."
+            "description": "Absolute path to napari-workflows YAML file"
           },
-          "threshold": {
-            "title": "Threshold",
+          "input_specs": {
+            "additionalProperties": {
+              "$ref": "#/$defs/NapariWorkflowsInput"
+            },
+            "title": "Input Specs",
+            "type": "object",
+            "description": "A dictionary of `NapariWorkflowsInput` values."
+          },
+          "output_specs": {
+            "additionalProperties": {
+              "$ref": "#/$defs/NapariWorkflowsOutput"
+            },
+            "title": "Output Specs",
+            "type": "object",
+            "description": "A dictionary of `NapariWorkflowsOutput` values."
+          },
+          "input_ROI_table": {
+            "default": "FOV_ROI_table",
+            "title": "Input Roi Table",
+            "type": "string",
+            "description": "Name of the ROI table over which the task loops to apply napari workflows. Examples: `FOV_ROI_table` => loop over the field of views; `organoid_ROI_table` => loop over the organoid ROI table (generated by another task); `well_ROI_table` => process the whole well as one image."
+          },
+          "level": {
+            "default": 0,
+            "title": "Level",
             "type": "integer",
-            "description": "Threshold value to be applied."
+            "description": "Pyramid level of the image to be used as input for napari-workflows. Choose `0` to process at full resolution. Levels > 0 are currently only supported for workflows that only have intensity images as input and only produce a label images as output."
           },
-          "min_size": {
-            "default": 50,
-            "title": "Min Size",
+          "relabeling": {
+            "default": true,
+            "title": "Relabeling",
+            "type": "boolean",
+            "description": "If `True`, apply relabeling so that label values are unique across all ROIs in the well."
+          },
+          "expected_dimensions": {
+            "default": 3,
+            "title": "Expected Dimensions",
             "type": "integer",
-            "description": "Minimum size of objects. Smaller objects are filtered out."
-          },
-          "iterator_configuration": {
-            "$ref": "#/$defs/IteratorConfiguration",
-            "title": "Iterator Configuration",
-            "description": "Advanced configuration to control masked and ROI-based iteration."
+            "description": "Expected dimensions (either `2` or `3`). Useful when loading 2D images that are stored in a 3D array with shape `(1, size_x, size_y)` [which is the default way Fractal stores 2D images], but you want to make sure the napari workflow gets a 2D array to process. Also useful to set to `2` when loading a 2D OME-Zarr that is saved as `(size_x, size_y)`."
           },
           "overwrite": {
             "default": true,
             "title": "Overwrite",
             "type": "boolean",
-            "description": "Whether to overwrite an existing label image. Defaults to True."
+            "description": "If `True`, overwrite the task output."
           }
         },
         "required": [
           "zarr_url",
-          "channel",
-          "threshold"
+          "workflow_file",
+          "input_specs",
+          "output_specs"
         ],
         "type": "object",
-        "title": "ThresholdSegmentationTask"
-      },
-      "docs_link": "https://github.com/fractal-analytics-platform/fractal-napari-workflows"
-    },
-    {
-      "name": "Gaussian Blur",
-      "output_types": {
-        "is_blurred": true
-      },
-      "category": "Image Processing",
-      "tags": [
-        "Denoising",
-        "Gaussian Blur"
-      ],
-      "docs_info": "### Purpose\n- Description and documentation of the Task functionality\n- Bullet points that cover main features of the tasks.\n- Can use **full** *markdown* formatting (including embedding images).\n\n### Outputs\n- Optional section on what kind of outputs the task generates. For the thresholding_task: Generates a new label image named `label_name`.\n\n### Limitations\n- List known limitations of the task (e.g. only works for certain data types).",
-      "type": "parallel",
-      "executable_parallel": "gaussian_blur_task.py",
-      "meta_parallel": {
-        "cpus_per_task": 1,
-        "mem": 4000
-      },
-      "args_schema_parallel": {
-        "additionalProperties": false,
-        "properties": {
-          "zarr_url": {
-            "title": "Zarr Url",
-            "type": "string",
-            "description": "URL to the OME-Zarr container."
-          },
-          "output_image_suffix": {
-            "default": "gaussian_blur",
-            "title": "Output Image Suffix",
-            "type": "string",
-            "description": "Suffix for the output image name."
-          },
-          "sigma_xy": {
-            "default": 1.0,
-            "title": "Sigma Xy",
-            "type": "number",
-            "description": "Standard deviation for Gaussian kernel in the XY plane. Defaults to 1.0."
-          },
-          "sigma_z": {
-            "title": "Sigma Z",
-            "type": "number",
-            "description": "Standard deviation for Gaussian kernel in the Z direction. If None, the smoothing will be applied only in XY."
-          },
-          "overwrite": {
-            "default": true,
-            "title": "Overwrite",
-            "type": "boolean",
-            "description": "Whether to overwrite an existing output image. Defaults to True."
-          },
-          "overwrite_input": {
-            "default": false,
-            "title": "Overwrite Input",
-            "type": "boolean",
-            "description": "If True, the task will first create a new OME-Zarr image with the Gaussian blur applied, and then overwrite the original image with the new one. Defaults to False."
-          }
-        },
-        "required": [
-          "zarr_url"
-        ],
-        "type": "object",
-        "title": "GaussianBlurTask"
-      },
-      "docs_link": "https://github.com/fractal-analytics-platform/fractal-napari-workflows"
-    },
-    {
-      "name": "Region Props Features",
-      "category": "Measurement",
-      "tags": [
-        "Region Properties",
-        "Intensity",
-        "Morphology"
-      ],
-      "docs_info": "### Purpose\n- Description and documentation of the Task functionality\n- Bullet points that cover main features of the tasks.\n- Can use **full** *markdown* formatting (including embedding images).\n\n### Outputs\n- Optional section on what kind of outputs the task generates. For the thresholding_task: Generates a new label image named `label_name`.\n\n### Limitations\n- List known limitations of the task (e.g. only works for certain data types).",
-      "type": "parallel",
-      "executable_parallel": "region_props_features_task.py",
-      "meta_parallel": {
-        "cpus_per_task": 1,
-        "mem": 4000
-      },
-      "args_schema_parallel": {
-        "additionalProperties": false,
-        "properties": {
-          "zarr_url": {
-            "title": "Zarr Url",
-            "type": "string",
-            "description": "URL to the OME-Zarr container"
-          },
-          "label_image_name": {
-            "title": "Label Image Name",
-            "type": "string",
-            "description": "Name of the label image to analyze."
-          },
-          "output_table_name": {
-            "default": "region_props_features",
-            "title": "Output Table Name",
-            "type": "string",
-            "description": "Name for the output feature table."
-          },
-          "overwrite": {
-            "default": true,
-            "title": "Overwrite",
-            "type": "boolean",
-            "description": "Whether to overwrite an existing feature table. Defaults to True."
-          }
-        },
-        "required": [
-          "zarr_url",
-          "label_image_name"
-        ],
-        "type": "object",
-        "title": "RegionPropsFeaturesTask"
+        "title": "NapariWorkflowsWrapper"
       },
       "docs_link": "https://github.com/fractal-analytics-platform/fractal-napari-workflows"
     }

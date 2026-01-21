@@ -11,58 +11,20 @@ DOCS_LINK = "https://github.com/fractal-analytics-platform/fractal-napari-workfl
 
 
 INPUT_MODELS = [
-    ("ngio", "images/_image.py", "ChannelSelectionModel"),
-    (
-        "fractal_napari_workflows",
-        "utils.py",
-        "MaskingConfiguration",
-    ),
-    (
-        "fractal_napari_workflows",
-        "utils.py",
-        "IteratorConfiguration",
-    ),
+    ["fractal_napari_workflows", "io_models.py", "NapariWorkflowsInput"],
+    ["fractal_napari_workflows", "io_models.py", "NapariWorkflowsOutput"],
 ]
 
 TASK_LIST = [
-    
     ParallelTask(
-        name="Threshold Segmentation",
-        executable="threshold_segmentation_task.py",
-        # Modify the meta according to your task requirements
-        # If the task requires a GPU, add "needs_gpu": True
-        meta={"cpus_per_task": 1, "mem": 4000},
-        category="Segmentation",
-        tags=["Instance Segmentation", "Classical segmentation"],
-        docs_info="file:docs_info/threshold_segmentation_task.md",
-    ),
-    
-    
-    ParallelTask(
-        name="Gaussian Blur",
-        executable="gaussian_blur_task.py",
-        # Modify the meta according to your task requirements
-        # If the task requires a GPU, add "needs_gpu": True
-        meta={"cpus_per_task": 1, "mem": 4000},
-        category="Image Processing",
-        tags=["Denoising", "Gaussian Blur"],
-        docs_info="file:docs_info/gaussian_blur_task.md",
-        # Uncomment the following line to forbid re-running the task on already
-        # processed images
-        # input_types={"is_blurred": False},
-        output_types={"is_blurred": True},
-    ),
-    
-    
-    ParallelTask(
-        name="Region Props Features",
-        executable="region_props_features_task.py",
-        # Modify the meta according to your task requirements
-        # If the task requires a GPU, add "needs_gpu": True
-        meta={"cpus_per_task": 1, "mem": 4000},
+        name="Napari Workflows Wrapper",
+        executable="napari_workflows_wrapper.py",
+        meta={
+            "cpus_per_task": 4,
+            "mem": 16000,
+        },
         category="Measurement",
-        tags=["Region Properties", "Intensity", "Morphology"],
-        docs_info="file:docs_info/region_props_features_task.md",
+        tags=["2D", "3D"],
+        docs_info="file:docs_info/napari_workflows_wrapper.md",
     ),
-    
 ]
