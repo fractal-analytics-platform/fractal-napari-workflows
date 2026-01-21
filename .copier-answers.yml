@@ -1,0 +1,13 @@
+# Do not edit - changes here will be overwritten by Copier
+_commit: v0.6.3
+_src_path: gh:fractal-analytics-platform/fractal-tasks-template
+author_email: joel.luethi@uzh.ch
+author_name: Joel Luethi
+mode: quick
+package_name: fractal_napari_workflows
+project_name: fractal-napari-workflows
+project_short_description: Fractal wrapper legacy task to run napari workflows
+project_url: https://github.com/fractal-analytics-platform/fractal-napari-workflows
+run_git_init: true
+run_pixi_init_task: true
+
